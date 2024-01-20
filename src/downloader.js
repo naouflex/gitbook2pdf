@@ -8,7 +8,7 @@ import { createConsola } from 'consola'
 
 export class Downloader {
   static defaults = {
-    timeout: 30,
+    timeout: 60,
     outDir: 'pages',
     pdfOptions: {
       // format: 'A4',
@@ -99,7 +99,7 @@ export class Downloader {
       await fs.mkdir(outDir, {
         recursive: true
       })
-      await this.#preparePage(page)
+      await this.#preparePage(page,url)
     })
   }
 
@@ -115,8 +115,15 @@ export class Downloader {
     })
   }
 
-  async #preparePage(page) {
-    await page.evaluate(() => {
+  async #preparePage(page,url) {
+    await page.evaluate(url => {
+      // Create a header element
+      const header = document.createElement('header');
+      header.style.cssText = 'font-size: 12px; text-align: center; margin-bottom: 10px;';
+      header.textContent = `URL: ${url}`;
+
+      // Prepend the header to the body or a specific container
+      document.body.insertBefore(header, document.body.firstChild);
       // Expand all expandable sections
       const sectionsToExpand = document
         .querySelectorAll('div[aria-controls^="expandable-body-"]')
@@ -145,7 +152,7 @@ export class Downloader {
       if (lastModifiedEl) {
         lastModifiedEl.innerText = lastModifiedEl.getAttribute('aria-label')
       }
-    })
+    }, url)
   }
 
   async #downloadPage(url, path, callback = null) {
